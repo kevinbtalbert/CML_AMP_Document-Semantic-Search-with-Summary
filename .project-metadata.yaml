@@ -1,6 +1,6 @@
-name: Semantic Search with CML
+name: Semantic Search with Summarization
 description: |
-  Leverage Chroma vector db for semantic search in CML
+  Leverage Chroma vector db for semantic search and summarization in CML
 
 author: Cloudera Inc.
 specification_version: 1.0
