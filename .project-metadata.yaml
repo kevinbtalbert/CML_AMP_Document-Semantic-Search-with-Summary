@@ -8,6 +8,11 @@ prototype_version: 1.0
 date: "2024-02-29"
 
 environment_variables:
+  OPENAI_KEY:
+    default: "sk-xxxx"
+    description: "If this is not set now, it will need to be configured for the application to function."
+    required: true
+
   COLLECTION_NAME:
     default: "cml-default"
     description: "Enter preferred collection name for Chroma DB to store document embeddings in."

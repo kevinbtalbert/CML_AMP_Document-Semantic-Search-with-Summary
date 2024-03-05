@@ -5,7 +5,9 @@ from pydantic import BaseModel
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 import chromadb
+import openai
 
+openai.api_key = os.getenv("OPENAI_KEY")
 chroma_client = chromadb.PersistentClient(path="/home/cdsw/chroma_db")
 
  # create the open-source embedding function
@@ -51,8 +53,8 @@ def main():
     demo = gradio.Interface(fn=get_responses,
                             title="Semantic Search with CML and Chroma DB",
                             description="This services leverages Chroma's vector database to search semantically similar documents to the user's input.",
-                            inputs=[gradio.Slider(minimum=1, maximum=10, step=1, value=3, label="Select number of similar documents to return"), gradio.Radio(["Yes", "No"], label="Show full document extract", value="Yes"), gradio.Textbox(label="Question", placeholder="Enter your search here")],
-                            outputs=[gradio.Textbox(label="Data Source(s) and Page Reference"), gradio.Textbox(label="Document Response")],
+                            inputs=[gradio.Slider(minimum=1, maximum=10, step=1, value=3, label="Select number of similar documents to return"), gradio.Radio(["Yes", "No"], label="Show summary (Generative AI)", value="Yes"), gradio.Radio(["Yes", "No"], label="Show full document extract", value="Yes"), gradio.Textbox(label="Question", placeholder="Enter your search here")],
+                            outputs=[gradio.Textbox(label="LLM Summary"), gradio.Textbox(label="Data Source(s) and Page Reference"), gradio.Textbox(label="Document Response")],
                             allow_flagging="never",
                             css=app_css)
 
@@ -65,7 +67,7 @@ def main():
     print("Gradio app ready")
 
 # Helper function for generating responses for the QA app
-def get_responses(num_docs, full_doc_display, question):
+def get_responses(num_docs, summary_display, full_doc_display, question):
     if num_docs is "" or question is "" or num_docs is None or question is None:
         return "One or more fields have not been specified."
     
@@ -73,8 +75,24 @@ def get_responses(num_docs, full_doc_display, question):
       full_doc_display = "No"
            
     source, doc_snippet = query_chroma_vectordb(question, full_doc_display, num_docs)
-    return source, doc_snippet
+    if summary_display == "Yes":
+        summary = get_llm_response_with_context(question, doc_snippet[0], "gpt-4")
+    else:
+        summary = "Summary disabled for this search."
+    return summary, source, doc_snippet
 
+# Pass through user input to LLM model with enhanced prompt and stop tokens
+def get_llm_response_with_context(question, context, engine):
+    question = "Answer this question based on given context " + question
+    
+    response = openai.ChatCompletion.create(
+        model=engine, # The deployment name you chose when you deployed the GPT-35-Turbo or GPT-4 model.
+        messages=[
+            {"role": "system", "content": str(context)},
+            {"role": "user", "content": str(question)}
+            ]
+    )
+    return response['choices'][0]['message']['content']
 
 def query_chroma_vectordb(query, full_doc_display, num_docs):
     docs = langchain_chroma.similarity_search(query)
