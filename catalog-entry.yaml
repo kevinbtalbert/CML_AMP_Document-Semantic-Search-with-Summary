@@ -15,5 +15,5 @@ entries:
       - Chroma
       - RAG
       - NLP
-    git_url: 'https://github.com/kevinbtalbert/CML_AMP_Document-Semantic-Search'
+    git_url: 'https://github.com/kevinbtalbert/CML_AMP_Document-Semantic-Search-with-Summary.git'
     is_prototype: true
